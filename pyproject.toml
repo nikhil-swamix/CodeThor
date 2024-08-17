@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "codethor"
+version = "0.1.4"
+description = "An AI enabled highly customizable copilot with agentic capabilities."
+authors = ["M Nikhil Swami <nikhilswami1@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+openai = "^1.35.13"
+anthropic = "^0.31.0"
+fastapi = "^0.111.0"
+selectolax = "^0.3.21"
+ollama = "^0.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

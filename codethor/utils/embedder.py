@@ -124,7 +124,7 @@ class VoyageAIEmbeddingFunction(EmbeddingFunction[Documents]):
         return cast(Embeddings, results.embeddings)
 
 
-class MixedbreadAIEmbeddingFunction:
+class MixedbreadAIEmbeddingFunction(EmbeddingFunction[Documents]):
     """Embedding function for MixedbreadAI. API docs - https://docs.mixedbread.ai/reference/embeddings-api"""
 
     class InputType(str, Enum):
@@ -150,7 +150,7 @@ class MixedbreadAIEmbeddingFunction:
         self._client = MixedbreadAI(api_key=os.environ["MIXEDBREAD_API_KEY"])
         self._input_type = input_type
 
-    def __call__(self, input: list) -> list:
+    def __call__(self, input: list) -> Embeddings:
 
         if len(input) > self._batch_size:
             raise ValueError(f"The maximum batch size supported is {self._batch_size}.")

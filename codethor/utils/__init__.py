@@ -1,36 +1,73 @@
-try:
-    from . import webtools
-except:
-    import webtools
 from typing import Literal
 
 
-def scan_files(patterns=["**/*.py"], ignore_patterns=[], use_gitignore=True):
-    import re,os
-    import itertools, glob
+def scan_files(patterns=None, ignore_patterns=[], use_gitignore=True):
+    """
+    Scans for files matching patterns, respecting ignore rules.
+
+    Args:
+        patterns: Glob patterns to match.
+        ignore_patterns: Regex patterns to ignore. Default: []
+        use_gitignore: Include .gitignore rules. Default: True
+
+    Returns:
+        List of matching file paths.
+
+    Process:
+    1. Adds .gitignore rules if applicable
+    2. Filters main directories against ignore patterns
+    3. Recursively searches each directory for matching files
+    4. Applies ignore patterns to found files
+    5. Normalizes and returns matching paths
+    """
+    import re, os
+    import glob
     from pathlib import Path
+
+    if patterns is None:
+        raise ValueError("At least one pattern must be specified. example ['**/*.py']")
+    if isinstance(patterns, str):
+        patterns = [patterns]
 
     matches = []
 
     if use_gitignore and Path('.gitignore').exists():
-        # print("Using .gitignore")
         with open('.gitignore', 'r') as gitignore_file:
-            ignore_patterns += [line.strip() for line in gitignore_file if line.strip() and not line.startswith('#')]
+            for l in gitignore_file.readlines():
+                l = l.strip()
+                if not l: # skip empty
+                    continue
+                if not l.startswith('#'):
+                    l = f".{l}" if l.startswith("*") else l
+                    ignore_patterns.append(l)
 
-    def should_ignore(file):
-        # Compile the regex patterns and match them against the file path
-        return any(re.search(re.compile(ignore_pattern), file) for ignore_pattern in ignore_patterns)
+        # print("Using .gitignore", ignore_patterns)
 
-    main_dirs = [d for d in glob.iglob("./*") if not any([should_ignore(d)])]
+    def is_ignored(file):
+        try:
+            for ignore_pattern in ignore_patterns:
+                ignore_pattern = ignore_pattern.replace("/**", "/*")
+                try:
+                    regex = re.compile(ignore_pattern)
+                    if re.search(regex, file):
 
-    for d in main_dirs:
-        for pattern in patterns:
-            for file in glob.iglob(pattern, root_dir=d, recursive=True):
-                file= Path(d).joinpath(file).as_posix()
-                # print(file)
-                file = file.replace("\\", "/")
-                if not should_ignore(file):
-                    matches.append(file)
+                        return True
+                except re.error:
+                    print(f"WARNING:Regex: {ignore_pattern} | File: {file}")
+                    continue
+            return False
+        except Exception as e:
+            print(f"ERROR: {e}, File: {file}")
+            return False
+
+    for pattern in patterns:
+        for file in glob.glob(pattern, recursive=True):
+            file = file.replace("\\", "/")
+            # print("file", file, is_ignored(file))
+            if is_ignored(file):
+                continue
+            matches.append(file)
+
     return matches
 
 
@@ -57,7 +94,7 @@ def make_filetag(filepath: str, tagname="File", attrs={}, wrapper: Literal["```"
 
     match wrapper:
         case "```":
-            template = f"```{filepath}\n{contents}\n```"
+            template = f"```{filepath.split('.')[-1]} {filepath}\n{contents}\n```"
         case "<>":
             if enum:
                 contents = "\n\t".join(contents.splitlines())
@@ -75,7 +112,7 @@ def dict_to_xml(dict):
         if isinstance(v, str):
             dict[k] = v
         elif isinstance(v, list):
-            dict[k] = "\n".join([f"<item>{x}</item>" for x in v])
+            dict[k] = "\n".join([f"<li>{x}</li>" for x in v])
 
     for k, v in dict.items():
         resp += f"<{k}>\n{v}\n</{k}>\n"
@@ -137,8 +174,6 @@ def to_clipboard(text):
 
 
 if __name__ == "__main__":
-    print(jsonify("../TASK-REFACTOR.txt"))
-
-    # newfile = edit_file("../f1", [{"-": [1, 2], "+": {1: "apple ball"}}])
-    # newfile = edit_file("../f1", [{"+": {4: "ashiled"}}])
-    # print(newfile)
+    start_directory = r'D:\GitHub\FREELANCE\Client-Himanshu\chunavexpress.com\frontend'  # Current directory
+    file_tree = generate_file_tree(start_directory)
+    print(file_tree)

@@ -9,7 +9,7 @@
             "isBackground": true,
             "problemMatcher": [],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder}/src"
             },
             "group": {
                 "kind": "build",
